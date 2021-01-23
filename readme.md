@@ -64,7 +64,7 @@ Finally, our application invokes the following REST API any time a user logs in
     POST /actions
     {
         actionDefinitionId: 111,
-        entity: {
+        entities: {
             "user: "user-guid-1234"
         }
     }
@@ -120,7 +120,7 @@ Finally, our application invokes the following REST API any time a user views a 
     POST /actions
     {
         actionDefinitionId: 777,
-        entity: {
+        entities: {
             "blog-post-author":"author-5678"
         }
     }
@@ -195,7 +195,7 @@ Finally, our application invokes the following REST API any time a user views a 
     POST /actions
     {
         actionDefinitionId: 777,
-        entity: {
+        entities: {
             "blog-post-viewer":"user-1234",
             "blog-post-author":"user-5678"
         }
