@@ -5,37 +5,33 @@ const port = 3000;
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
-
 ////////////////////////////////////////////////////////////
 
-let MEMORY_STORE = {
+let DATA_STORE = {
     "actionDefinitions": [],
     "awards": [],
     "achievements": [],
-    "actions": []
+    "actions": [],
+    "entities": {},
 };
 
 ////////////////////////////////////////////////////////////
 
-app.post('/action-definitions', (req,res) => {
+app.post('/action-definitions', (req, res) => {
 
     // todo validate input here
 
     let newActionDefinition = {
         id: uuidv4(),
-        name: req.body.name,
-        entitiesImpacted: req.body.entitiesImpacted
+        name: req.body.name
     };
-    MEMORY_STORE.actionDefinitions.push(newActionDefinition);
+    DATA_STORE.actionDefinitions.push(newActionDefinition);
 
     res.send(newActionDefinition);
 });
 
 
-app.post('/awards', (req,res) => {
+app.post('/awards', (req, res) => {
 
     // todo validate input here
 
@@ -44,42 +40,84 @@ app.post('/awards', (req,res) => {
         name: req.body.name,
         description: req.body.description
     };
-    MEMORY_STORE.awards.push(newAward);
+    DATA_STORE.awards.push(newAward);
 
     res.send(newAward);
 });
 
 
-app.post('/achievements', (req,res) => {
+app.post('/achievements', (req, res) => {
 
     // todo validate input here
 
     let newAchievement = {
         id: uuidv4(),
-        awards: req.body.awards,
-        rules: req.body.rules
+        award: req.body.award,
+        rules: [req.body.rule] // TODO - only allowing one rule for now
     };
-    MEMORY_STORE.achievements.push(newAchievement);
+    DATA_STORE.achievements.push(newAchievement);
 
     res.send(newAchievement);
 });
 
-app.post('/actions', (req,res) => {
+app.post('/actions', (req, res) => {
 
     // todo validate input here
 
+    const actionDefinitionId = req.body.actionDefinitionId;
+
     let newAction = {
         id: uuidv4(),
-        actionDefinitionId: req.body.actionDefinitionId,
+        actionDefinitionId: actionDefinitionId,
         entities: req.body.entities
     };
-    MEMORY_STORE.actions.push(newAction);
+    DATA_STORE.actions.push(newAction);
 
     res.send(newAction);
+
+    // Process for each impacted entity
+    for (let entityType in newAction.entities) {
+        
+        // Get achievements related to this event
+        let relevantAchievements = [];
+        for (let achievement of DATA_STORE.achievements) {
+            for (let rule of achievement.rules) {
+                if (rule.actionDefinitionId == actionDefinitionId && rule.entitiesImpacted.indexOf(entityType) > -1) {
+                    relevantAchievements.push(achievement);
+                }
+            }
+        }
+
+        // Get the user entity indicated in this event
+        const entityId = newAction.entities[entityType];
+        if (!DATA_STORE.entities[entityId]) {
+            DATA_STORE.entities[entityId] = {
+                "achievementProgress": {}
+            };
+        }
+
+        for (let relevantAchievement of relevantAchievements) {
+            if (!DATA_STORE.entities[entityId]["achievementProgress"][relevantAchievement.id]) {
+                DATA_STORE.entities[entityId]["achievementProgress"][relevantAchievement.id] = {
+                    "aggregationType": relevantAchievement.rules[0].aggregationType, // TODO enforcing just one rule for today
+                    [relevantAchievement.rules[0].aggregationType]: 0 //TODO enforcing just one rule for today
+                };
+            }
+
+            if (DATA_STORE.entities[entityId]["achievementProgress"][relevantAchievement.id]["aggregationType"] == "count") {
+                DATA_STORE.entities[entityId]["achievementProgress"][relevantAchievement.id]["count"] += 1;
+            }
+        }
+    }
+
 });
 
 
 //////////////////////////////////////////////////////////
+
+app.get('/', (req, res) => {
+    res.json(DATA_STORE.entities);
+});
 
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`);
