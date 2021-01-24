@@ -73,7 +73,7 @@ Next we use the achievements REST API to define the criteria for a user to quali
 
     POST /achievements
     {
-        name: "Write a blog that is viewed 100 times",
+        name: "Have your blogs viewed 100 times",
         rule: {
             actionDefinitionId: 777,
             entitiesImpacted: ["blog-post-author"],
@@ -96,6 +96,8 @@ Finally, our application invokes the following REST API any time a user views a 
 ## TODO - support to define awards (e.g. badges) for achievements
 
 ## TODO - support for more than one rule in achievement
+
+## TODO - support other aggregations besides 'count'. Average? Sum? etc.
 
 ## TODO - support for non-event rewards such as "time spent in system"
 
